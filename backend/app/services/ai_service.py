@@ -97,87 +97,52 @@ class AIService:
         8. If they dare to have no README, unleash an extra wave of ridicule for their utter incompetence.
         """
 
-    def _detect_tech_stack(self, files: list, package_info: str) -> dict:
+    def _detect_tech_stack(self, analysis: dict) -> dict:
+        files = analysis.get('file_structure', [])
+        package_info = analysis.get('package_info', '')
+        package_content = analysis.get('package_content', {})
+        
         tech_stack = {
-            "frontend": [],
-            "backend": [],
-            "database": [],
-            "deployment": [],
-            "framework": []
+            "dependencies": package_content.get('dependencies', {}),
+            "devDependencies": package_content.get('devDependencies', {}),
+            "scripts": package_content.get('scripts', {}),
+            "detected_files": {
+                "config": [f for f in files if f.endswith(('.config.js', '.config.ts', 'rc.js', '.json'))],
+                "typescript": any(f.endswith('.ts') or f.endswith('.tsx') for f in files),
+                "environment": [f for f in files if '.env' in f.lower()],
+                "docker": any(f.endswith('Dockerfile') or f == 'docker-compose.yml' for f in files),
+            }
         }
-        
-        # Frontend detection
-        if any(f.endswith(('.jsx', '.tsx')) for f in files):
-            tech_stack["frontend"].append("React")
-            if "next" in package_info.lower():
-                tech_stack["framework"].append("Next.js")
-        elif any(f.endswith('.vue') for f in files):
-            tech_stack["frontend"].append("Vue.js")
-        elif any(f.endswith('.svelte') for f in files):
-            tech_stack["frontend"].append("Svelte")
-
-        # Backend detection
-        if any(f.endswith('.py') for f in files):
-            tech_stack["backend"].append("Python")
-            if "fastapi" in package_info.lower():
-                tech_stack["framework"].append("FastAPI")
-            elif "django" in package_info.lower():
-                tech_stack["framework"].append("Django")
-        elif any(f.endswith('.js') for f in files) and ("express" in package_info.lower()):
-            tech_stack["backend"].append("Node.js")
-            tech_stack["framework"].append("Express.js")
-
-        # Database detection
-        if "mongodb" in package_info.lower():
-            tech_stack["database"].append("MongoDB")
-        elif "postgresql" in package_info.lower():
-            tech_stack["database"].append("PostgreSQL")
-        elif "prisma" in package_info.lower():
-            tech_stack["database"].append("Prisma ORM")
-
-        # Deployment detection
-        if "vercel.json" in files or "next.config.js" in files:
-            tech_stack["deployment"].append("Vercel")
-        elif "netlify.toml" in files:
-            tech_stack["deployment"].append("Netlify")
-        
         return tech_stack
 
     def _create_readme_prompt(self, analysis: dict) -> str:
-        files = analysis.get('file_structure', [])
-        package_info = analysis.get('package_info', '')
-        tech_stack = self._detect_tech_stack(files, package_info)
+        tech_stack = self._detect_tech_stack(analysis)
+        project_name = analysis.get('repo_name', '').replace('-', ' ').title()
         
-        return f"""You are a technical documentation expert. Generate a comprehensive README.md for this project.
+        return f"""Generate a professional README.md for this project based on the following analysis:
 
-Project Analysis:
-- Tech Stack:
-  Frontend: {', '.join(tech_stack['frontend']) or 'Not detected'}
-  Backend: {', '.join(tech_stack['backend']) or 'Not detected'}
-  Framework: {', '.join(tech_stack['framework']) or 'Not detected'}
-  Database: {', '.join(tech_stack['database']) or 'Not detected'}
-  Deployment: {', '.join(tech_stack['deployment']) or 'Not detected'}
-- Package Info: {package_info}
+Project Details:
+- Name: {project_name}
+- Dependencies: {tech_stack['dependencies']}
+- Dev Dependencies: {tech_stack['devDependencies']}
+- Scripts: {tech_stack['scripts']}
+- Config Files: {tech_stack['detected_files']['config']}
+- Uses TypeScript: {tech_stack['detected_files']['typescript']}
+- Environment Files: {tech_stack['detected_files']['environment']}
+- Docker Setup: {tech_stack['detected_files']['docker']}
 
-Instructions:
-1. Focus on accurately describing the detected technology stack
-2. Structure the README as follows:
-   - Project Title and Description
-   - Features (based on the actual project structure)
-   - Tech Stack (only include detected technologies)
-   - Installation & Setup (specific to the detected framework)
-   - Environment Variables (if any detected)
-   - Deployment (based on detected deployment configuration)
+Guidelines:
+1. Create a concise but informative project description
+2. List ONLY the main features that are evident from the dependencies
 
 Important:
-- Only mention technologies and features that are actually detected
-- describe nicely and make it direcly ready to use Readme
-- Don't make assumptions about undetected features
-- Keep descriptions accurate and specific to this project
-- Use proper markdown formatting
-- Include relevant badges only for detected technologies
+- NO assumptions about versions or undetected features
+- NO placeholder text or generic descriptions
+- Focus on accuracy over comprehensiveness
+- Include actual script commands from package.json
+- Only mention environment variables that are clearly required
 
-Format the README in clear, professional markdown."""
+Format everything in clean, professional markdown with proper code blocks and sections."""
 
 # Create and export an instance
 ai_service = AIService()
