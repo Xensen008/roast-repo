@@ -1,6 +1,7 @@
 from aiohttp import ClientSession
 import base64
 import re
+from ..config import settings
 
 class GitHubService:
     def __init__(self, token: str):
@@ -54,6 +55,8 @@ class GitHubService:
         async with ClientSession() as session:
             async with session.get(url, headers=self.headers) as response:
                 if response.status == 200:
+                    if 'raw.githubusercontent.com' in url:
+                        return await response.text()
                     data = await response.json()
                     if isinstance(data, dict) and "content" in data:
                         return base64.b64decode(data["content"]).decode('utf-8')
@@ -77,7 +80,7 @@ class GitHubService:
             async with session.get(url, headers=self.headers, params={"per_page": limit}) as response:
                 if response.status == 200:
                     commits = await response.json()
-                    return [{"message": c["commit"]["message"], "date": c["commit"]["author"]["date"]} for c in commits]
+                    return [{"message": c["commit"]["message"], "author": c["commit"]["author"]["name"]} for c in commits]
                 return []
     
     async def get_open_issues(self, owner: str, repo: str, limit: int = 5) -> list:
@@ -86,5 +89,8 @@ class GitHubService:
             async with session.get(url, headers=self.headers, params={"state": "open", "per_page": limit}) as response:
                 if response.status == 200:
                     issues = await response.json()
-                    return [{"title": i["title"], "url": i["html_url"]} for i in issues]
+                    return [{"title": i["title"], "state": i["state"]} for i in issues]
                 return []
+
+# Create and export an instance
+github_service = GitHubService(settings.GITHUB_TOKEN)
