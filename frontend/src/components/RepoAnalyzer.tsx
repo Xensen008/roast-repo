@@ -6,7 +6,6 @@ const RepoAnalyzer: React.FC = () => {
   const [repoUrl, setRepoUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [readmeLoading, setReadmeLoading] = useState(false)
-  const [analysis, setAnalysis] = useState<any>(null)
   const [roast, setRoast] = useState<string | null>(null)
   const [generatedReadme, setGeneratedReadme] = useState<string | null>(null)
 
@@ -16,9 +15,14 @@ const RepoAnalyzer: React.FC = () => {
     
     try {
       const data = await analyzeRepository(repoUrl)
-      setAnalysis(data.analysis)
       setRoast(data.roast)
-      toast.success('Roast served! 🔥')
+      toast.success('Analysis complete', {
+        style: {
+          background: '#000',
+          color: '#fff',
+          border: '1px solid rgba(255,255,255,0.1)'
+        }
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to roast')
     } finally {
@@ -40,63 +44,64 @@ const RepoAnalyzer: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-purple-950 to-black text-gray-100 p-4">
-      <div className="max-w-3xl mx-auto pt-16 space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white p-4">
+      <div className="max-w-4xl mx-auto pt-16 space-y-12">
         {/* Hero */}
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 bg-clip-text text-transparent animate-gradient">
-            Code Critic AI 💀
+        <div className="text-center space-y-6 animate-fade-in">
+          <h1 className="text-7xl font-bold bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent animate-gradient">
+            CODE CRITIC
           </h1>
-          <p className="text-gray-400">Let AI analyze your GitHub repository...</p>
+          <p className="text-gray-400 text-xl font-light tracking-wide">
+            Submit your repository for a brutal code review
+          </p>
         </div>
 
         {/* Input */}
-        <div className="glass p-6 rounded-xl border border-purple-800/30 animate-pulse-slow">
-          <form onSubmit={handleAnalyze} className="space-y-4">
+        <div className="glass border border-white/10 p-8 rounded-2xl backdrop-blur-lg shadow-2xl animate-fade-in">
+          <form onSubmit={handleAnalyze} className="space-y-6">
             <input
               type="text"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               placeholder="https://github.com/username/repo"
-              className="w-full p-4 rounded-lg bg-black/50 border border-purple-800/50 focus:border-purple-500 outline-none text-lg"
+              className="w-full p-6 rounded-xl bg-black/40 border border-white/20 focus:border-white/40 outline-none text-lg transition-all duration-300 hover:border-white/30"
             />
             <button
               type="submit"
               disabled={loading}
-              className="w-full p-4 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 transition-all disabled:opacity-50 text-lg font-medium"
+              className="w-full p-6 rounded-xl bg-gradient-to-r from-white via-gray-200 to-white text-black text-lg font-medium disabled:opacity-50 transition-all duration-300 hover:shadow-lg hover:shadow-white/10 animate-pulse-slow"
             >
-              {loading ? 'Analyzing...' : 'Analyze Repository 🔍'}
+              {loading ? 'ANALYZING...' : 'ANALYZE REPOSITORY'}
             </button>
           </form>
         </div>
 
         {/* Results */}
         {roast && (
-          <div className="space-y-6 animate-fade-in">
-            <div className="glass p-6 rounded-xl border border-red-800/30 transform hover:scale-[1.02] transition-all">
-              <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-red-400 to-purple-400 bg-clip-text text-transparent">
-                AI's Verdict 🎭
+          <div className="space-y-8 animate-fade-in">
+            <div className="glass border border-white/10 p-8 rounded-2xl backdrop-blur-lg shadow-2xl">
+              <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                ANALYSIS COMPLETE
               </h2>
-              <p className="text-xl text-gray-300 leading-relaxed whitespace-pre-wrap">{roast}</p>
+              <p className="text-xl text-gray-300 leading-relaxed">{roast}</p>
               
-              {analysis && !analysis.has_readme && (
-                <div className="mt-6 p-4 rounded-lg bg-black/30 border border-red-800/30">
-                  <p className="text-red-400 mb-3">⚠️ No README found! Are you serious?</p>
-                  <button
-                    onClick={handleGenerateReadme}
-                    disabled={readmeLoading}
-                    className="w-full p-3 rounded-lg bg-gradient-to-r from-red-600 to-purple-600 hover:opacity-90 transition-all disabled:opacity-50"
-                  >
-                    {readmeLoading ? 'Generating...' : 'Generate a README (since you cant) 📝'}
-                  </button>
-                </div>
-              )}
+              <div className="mt-8 pt-8 border-t border-white/10">
+                <button
+                  onClick={handleGenerateReadme}
+                  disabled={readmeLoading}
+                  className="w-full p-6 rounded-xl bg-white/5 text-white border border-white/20 disabled:opacity-50 transition-all duration-300 hover:bg-white/10 hover:border-white/30"
+                >
+                  {readmeLoading ? 'GENERATING README...' : 'GENERATE PROPER README'}
+                </button>
+              </div>
             </div>
 
             {generatedReadme && (
-              <div className="glass p-6 rounded-xl border border-purple-800/30">
-                <h2 className="text-xl font-bold mb-4 text-purple-400">Here's a Proper README 📝</h2>
-                <pre className="text-gray-300 leading-relaxed whitespace-pre-wrap bg-black/30 p-6 rounded-lg overflow-auto">
+              <div className="glass border border-white/10 p-8 rounded-2xl backdrop-blur-lg shadow-2xl animate-fade-in">
+                <h2 className="text-3xl font-bold mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  GENERATED README
+                </h2>
+                <pre className="text-gray-300 leading-relaxed whitespace-pre-wrap bg-black/50 p-8 rounded-xl border border-white/5">
                   {generatedReadme}
                 </pre>
               </div>
