@@ -7,6 +7,25 @@ export default {
   ],
   theme: {
     extend: {
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: 'none',
+            code: {
+              backgroundColor: 'rgb(0 0 0 / 0.3)',
+              padding: '0.25rem',
+              borderRadius: '0.25rem',
+              fontWeight: '400',
+            },
+            'code::before': {
+              content: '""'
+            },
+            'code::after': {
+              content: '""'
+            }
+          }
+        }
+      },
       animation: {
         'gradient': 'gradient 8s linear infinite',
         'glow': 'glow 2s ease-in-out infinite alternate',
