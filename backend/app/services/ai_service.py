@@ -86,26 +86,49 @@ class AIService:
 
     def _create_readme_prompt(self, analysis: dict) -> str:
         existing_readme = analysis.get('readme_content', '').strip()
-        files = ', '.join(analysis.get('file_structure', []))
-        package_info = analysis.get('package_info', 'No package info available')
-
-        return f"""Generate a professional README.md for this repository.
+        files = analysis.get('file_structure', [])
+        package_info = analysis.get('package_info', '')
         
-        Current Repository State:
+        # Detect project structure
+        frontend_files = [f for f in files if f.endswith(('.js', '.ts', '.jsx', '.tsx', '.css', '.html'))]
+        backend_files = [f for f in files if f.endswith(('.py', '.java', '.go'))]
+        
+        return f"""You are a technical documentation expert. Generate a comprehensive README.md that focuses on explaining the project's purpose and structure.
+
+        Repository Analysis:
         - Existing README: {existing_readme if existing_readme else 'None'}
-        - Files: {files}
+        - Frontend Files: {', '.join(frontend_files)}
+        - Backend Files: {', '.join(backend_files)}
         - Package Info: {package_info}
         
         Instructions:
-        1. {f'Improve the existing README while maintaining its core structure' if existing_readme else 'Create a comprehensive new README'}
-        2. Include all standard sections (Description, Installation, Usage, etc.)
-        3. Add specific setup instructions based on package info
-        4. Document any environment variables needed
-        5. Add badges for build status, version, etc.
-        6. Include code examples where relevant
-        7. Maintain a professional tone
+        1. {f'Use the existing README as reference but focus on explaining the project better' if existing_readme else 'Create a new README focusing on project explanation'}
+        2. Structure the README as follows:
+           - Project Title (Code Critic)
+           - Brief but compelling description of what Code Critic does
+           - Key Features section highlighting main functionalities
+           - Project Architecture explaining frontend/backend separation
+           - Detailed File Structure section showing important files and their purposes
+           - Installation & Setup instructions for both frontend and backend
+           - Environment Variables section
+           - Usage Guide with examples
+           - Technologies Used section
         
-        Format the README in proper markdown with clear sections."""
+        3. Focus Areas:
+           - Explain that this is a code analysis and README generation tool
+           - Highlight the roasting feature and README generation capabilities
+           - Detail the tech stack (React, FastAPI, Gemini AI, etc.)
+           - Provide clear structure of frontend/backend architecture
+           - Include actual file paths and their purposes
+        
+        4. Important Notes:
+           - Keep the tone professional but engaging
+           - Use actual file paths and dependencies from the analysis
+           - Include real configuration requirements
+           - Add relevant badges for the technologies used
+           - Document all environment variables needed
+        
+        Format everything in proper markdown with clear sections and code blocks where needed."""
 
 # Create and export an instance
 ai_service = AIService()
