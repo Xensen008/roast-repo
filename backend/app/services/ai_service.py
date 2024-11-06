@@ -48,19 +48,23 @@ class AIService:
         return response.text
 
     def _create_roast_prompt(self, analysis: dict) -> str:
-        return f"""Roast this repository based on:
+        return f"""You're a ruthless code critic who absolutely destroys GitHub repos. 
+        
+        Analyze this pathetic excuse for a repository:
         Has README: {analysis.get('has_readme', False)}
-        Recent Commits: {analysis.get('recent_commits', [])}
-        Open Issues: {analysis.get('open_issues', [])}
+        Latest Commits: {analysis.get('recent_commits', [])}
+        Issues: {analysis.get('open_issues', [])}
         Files: {', '.join(analysis.get('file_structure', []))}
         Security Issues: {len(analysis.get('exposed_secrets', []))}
         
-        Be creative, sarcastic, and use mild swear words. Point out:
-        1. Code organization
-        2. Commit messages
-        3. Issue management
-        4. Security practices
-        5. Documentation quality"""
+        Rules:
+        1. Be extremely offensive (but no slurs)
+        2. Mock their coding abilities mercilessly
+        3. Use strong language and insults
+        4. Keep it under 5 sentences
+        5. Add offensive slangs
+        6. If no README exists, mock them extra hard
+        7. Make them question their life choices"""
 
     def _create_readme_prompt(self, analysis: dict) -> str:
         return f"""Generate a comprehensive README.md for a repository with these files:
