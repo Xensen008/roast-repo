@@ -4,33 +4,46 @@ from ..config import settings
 class AIService:
     def __init__(self):
         self.model = None
+        self.current_key_index = 0
+        self.api_keys = settings.GEMINI_API_KEYS
         self.safety_settings = [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
         ]
-        self.initialize(settings.GEMINI_API_KEY)
+        self.initialize(self.api_keys[0])
     
+    def rotate_api_key(self):
+        self.current_key_index = (self.current_key_index + 1) % len(self.api_keys)
+        new_key = self.api_keys[self.current_key_index]
+        self.initialize(new_key)
+        return new_key
+
     def initialize(self, api_key: str):
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-1.5-pro')
     
     async def generate_roast(self, repo_analysis: dict) -> str:
-        try:
-            prompt = self._create_roast_prompt(repo_analysis)
-            response = await self.model.generate_content_async(
-                prompt,
-                safety_settings=self.safety_settings,
-                generation_config={
-                    'temperature': 0.8,
-                    'top_p': 0.9,
-                    'top_k': 40,
-                }
-            )
-            return response.text
-        except Exception as e:
-            return f"Failed to generate roast: {str(e)}"
+        for _ in range(len(self.api_keys)):  # Try all keys
+            try:
+                prompt = self._create_roast_prompt(repo_analysis)
+                response = await self.model.generate_content_async(
+                    prompt,
+                    safety_settings=self.safety_settings,
+                    generation_config={
+                        'temperature': 0.8,
+                        'top_p': 0.9,
+                        'top_k': 40,
+                    }
+                )
+                return response.text
+            except Exception as e:
+                if "429" in str(e) and self.current_key_index < len(self.api_keys) - 1:
+                    self.rotate_api_key()
+                    continue
+                return f"Failed to generate roast: {str(e)}"
+        return "All API keys have been exhausted. Please try again later."
     
     async def generate_readme(self, repo_analysis: dict) -> str:
         prompt = self._create_readme_prompt(repo_analysis)

@@ -7,7 +7,7 @@ services:
     envVars:
       - key: GITHUB_TOKEN
         sync: false
-      - key: GEMINI_API_KEY
-        sync: false
+      - key: GEMINI_API_KEYS
+        sync: false  # Format: "key1,key2,key3"
     healthCheckPath: /
     autoDeploy: true
