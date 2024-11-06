@@ -74,12 +74,15 @@ class AIService:
         - Package Info: {analysis.get('package_info', 'No dependencies found')}
 
         Rules for Roasting:
-        1. Generate EXACTLY 5-6 lines of brutal roasts
-        2. Use extremely simple, offensive language and sarcasm
-        3. Mock their coding practices, career choices, and life decisions
-        4. Make each line as painful and accurate as possible
-        5. End with the most brutal sarcastic suggestion
-        6. Include specific criticisms about their .env and README management"""
+        1. Generate 5 to 10 lines of merciless roasts that hit harder than a hangover.
+        2. Use the most offensive language and sarcasm you can muster.
+        3. Tear apart their coding practices, career choices, and every pathetic life decision they've made.
+        4. Each line should be a gut punch—painful, precise, and unforgettable.
+        5. Wrap it up with the most savage, sarcastic suggestion that leaves them questioning their existence.
+        6. Don't hold back on the jabs about their sorry .env and README management—make it sting.
+        7. Sprinkle in some foul language and slang to crank up the intensity to eleven.
+        8. If they dare to have no README, unleash an extra wave of ridicule for their utter incompetence.
+        """
 
     def _create_readme_prompt(self, analysis: dict) -> str:
         existing_readme = analysis.get('readme_content', '').strip()

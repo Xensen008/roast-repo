@@ -9,7 +9,7 @@ const RepoAnalyzer: React.FC = () => {
   const [readmeLoading, setReadmeLoading] = useState(false)
   const [roast, setRoast] = useState<string | null>(null)
   const [generatedReadme, setGeneratedReadme] = useState<string | null>(null)
-  const [analysisData, setAnalysisData] = useState<any>(null)
+  const [_analysisData, setAnalysisData] = useState<any>(null)
 
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault()
@@ -62,13 +62,24 @@ const RepoAnalyzer: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white p-4">
       <div className="max-w-4xl mx-auto pt-16 space-y-12">
+        {/* GitHub Corner */}
+        <a href="https://github.com/xensen008/repo-roaster" 
+           className="github-corner absolute top-0 right-0" 
+           aria-label="View source on GitHub">
+          <svg width="80" height="80" viewBox="0 0 250 250" className="fill-white text-black" aria-hidden="true">
+            <path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path>
+            <path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" className="octo-arm"></path>
+            <path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" className="octo-body"></path>
+          </svg>
+        </a>
+
         {/* Hero */}
         <div className="text-center space-y-6 animate-fade-in">
           <h1 className="text-7xl font-bold bg-gradient-to-r from-white via-gray-300 to-white bg-clip-text text-transparent animate-gradient">
-            CODE CRITIC
+              CODE CRITIC
           </h1>
           <p className="text-gray-400 text-xl font-light tracking-wide">
-            Submit your repository for a brutal code review
+            Let's roast you and your code till it's well done 🔥
           </p>
         </div>
 
@@ -98,15 +109,10 @@ const RepoAnalyzer: React.FC = () => {
             <div className="glass border border-white/10 p-8 rounded-2xl backdrop-blur-lg shadow-2xl">
               <div className="flex flex-col space-y-4">
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                  ANALYSIS COMPLETE
+                  Roast as you deserve
                 </h2>
-                <div className="flex gap-4 text-sm text-gray-400 border-b border-white/10 pb-4">
-                  <span className="px-2 py-1 rounded bg-white/5">
-                    {analysisData?.file_structure.filter((f: string) => f.includes('.env')).length} .env files
-                  </span>
-                  <span className="px-2 py-1 rounded bg-white/5">
-                    {analysisData?.file_structure.filter((f: string) => f.toLowerCase().includes('readme')).length} README files
-                  </span>
+                <div className="text-sm text-red-400 border-b border-white/10 pb-4">
+                  Skill Issue Level: Maximum Cringe
                 </div>
               </div>
               <p className="text-xl text-gray-300 leading-relaxed mt-6 whitespace-pre-line">{roast}</p>
@@ -152,6 +158,11 @@ const RepoAnalyzer: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Footer */}
+        <footer className="text-center text-gray-500 py-8 border-t border-white/10">
+          <p>Developed with hate by <a href="https://arnabjk008.vercel.app" className="text-white hover:text-gray-300 underline">arnabjk</a></p>
+        </footer>
       </div>
     </div>
   )
