@@ -97,51 +97,87 @@ class AIService:
         8. If they dare to have no README, unleash an extra wave of ridicule for their utter incompetence.
         """
 
+    def _detect_tech_stack(self, files: list, package_info: str) -> dict:
+        tech_stack = {
+            "frontend": [],
+            "backend": [],
+            "database": [],
+            "deployment": [],
+            "framework": []
+        }
+        
+        # Frontend detection
+        if any(f.endswith(('.jsx', '.tsx')) for f in files):
+            tech_stack["frontend"].append("React")
+            if "next" in package_info.lower():
+                tech_stack["framework"].append("Next.js")
+        elif any(f.endswith('.vue') for f in files):
+            tech_stack["frontend"].append("Vue.js")
+        elif any(f.endswith('.svelte') for f in files):
+            tech_stack["frontend"].append("Svelte")
+
+        # Backend detection
+        if any(f.endswith('.py') for f in files):
+            tech_stack["backend"].append("Python")
+            if "fastapi" in package_info.lower():
+                tech_stack["framework"].append("FastAPI")
+            elif "django" in package_info.lower():
+                tech_stack["framework"].append("Django")
+        elif any(f.endswith('.js') for f in files) and ("express" in package_info.lower()):
+            tech_stack["backend"].append("Node.js")
+            tech_stack["framework"].append("Express.js")
+
+        # Database detection
+        if "mongodb" in package_info.lower():
+            tech_stack["database"].append("MongoDB")
+        elif "postgresql" in package_info.lower():
+            tech_stack["database"].append("PostgreSQL")
+        elif "prisma" in package_info.lower():
+            tech_stack["database"].append("Prisma ORM")
+
+        # Deployment detection
+        if "vercel.json" in files or "next.config.js" in files:
+            tech_stack["deployment"].append("Vercel")
+        elif "netlify.toml" in files:
+            tech_stack["deployment"].append("Netlify")
+        
+        return tech_stack
+
     def _create_readme_prompt(self, analysis: dict) -> str:
-        existing_readme = analysis.get('readme_content', '').strip()
         files = analysis.get('file_structure', [])
         package_info = analysis.get('package_info', '')
+        tech_stack = self._detect_tech_stack(files, package_info)
         
-        # Detect project structure
-        frontend_files = [f for f in files if f.endswith(('.js', '.ts', '.jsx', '.tsx', '.css', '.html'))]
-        backend_files = [f for f in files if f.endswith(('.py', '.java', '.go'))]
-        
-        return f"""You are a technical documentation expert. Generate a comprehensive README.md that focuses on explaining the project's purpose and structure.
+        return f"""You are a technical documentation expert. Generate a comprehensive README.md for this project.
 
-        Repository Analysis:
-        - Existing README: {existing_readme if existing_readme else 'None'}
-        - Frontend Files: {', '.join(frontend_files)}
-        - Backend Files: {', '.join(backend_files)}
-        - Package Info: {package_info}
-        
-        Instructions:
-        1. {f'Use the existing README as reference but focus on explaining the project better' if existing_readme else 'Create a new README focusing on project explanation'}
-        2. Structure the README as follows:
-           - Project Title (Code Critic)
-           - Brief but compelling description of what Code Critic does
-           - Key Features section highlighting main functionalities
-           - Project Architecture explaining frontend/backend separation
-           - Detailed File Structure section showing important files and their purposes
-           - Installation & Setup instructions for both frontend and backend
-           - Environment Variables section
-           - Usage Guide with examples
-           - Technologies Used section
-        
-        3. Focus Areas:
-           - Explain that this is a code analysis and README generation tool
-           - Highlight the roasting feature and README generation capabilities
-           - Detail the tech stack (React, FastAPI, Gemini AI, etc.)
-           - Provide clear structure of frontend/backend architecture
-           - Include actual file paths and their purposes
-        
-        4. Important Notes:
-           - Keep the tone professional but engaging
-           - Use actual file paths and dependencies from the analysis
-           - Include real configuration requirements
-           - Add relevant badges for the technologies used
-           - Document all environment variables needed
-        
-        Format everything in proper markdown with clear sections and code blocks where needed."""
+Project Analysis:
+- Tech Stack:
+  Frontend: {', '.join(tech_stack['frontend']) or 'Not detected'}
+  Backend: {', '.join(tech_stack['backend']) or 'Not detected'}
+  Framework: {', '.join(tech_stack['framework']) or 'Not detected'}
+  Database: {', '.join(tech_stack['database']) or 'Not detected'}
+  Deployment: {', '.join(tech_stack['deployment']) or 'Not detected'}
+- Package Info: {package_info}
+
+Instructions:
+1. Focus on accurately describing the detected technology stack
+2. Structure the README as follows:
+   - Project Title and Description
+   - Features (based on the actual project structure)
+   - Tech Stack (only include detected technologies)
+   - Installation & Setup (specific to the detected framework)
+   - Environment Variables (if any detected)
+   - Deployment (based on detected deployment configuration)
+
+Important:
+- Only mention technologies and features that are actually detected
+- describe nicely and make it direcly ready to use Readme
+- Don't make assumptions about undetected features
+- Keep descriptions accurate and specific to this project
+- Use proper markdown formatting
+- Include relevant badges only for detected technologies
+
+Format the README in clear, professional markdown."""
 
 # Create and export an instance
 ai_service = AIService()
