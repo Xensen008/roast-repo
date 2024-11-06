@@ -187,21 +187,22 @@ const RepoAnalyzer: React.FC = () => {
                     <ReactMarkdown 
                       remarkPlugins={[remarkGfm]}
                       rehypePlugins={[rehypeRaw, rehypeSanitize]}
-                      className="text-gray-300 leading-relaxed"
+                      className="prose prose-invert max-w-none prose-pre:bg-black/50 prose-pre:p-4 prose-pre:rounded-xl prose-pre:border prose-pre:border-white/5"
                       components={{
                         code({className, children, ...props}) {
+                          const match = /language-(\w+)/.exec(className || '');
                           return (
-                            <code className={`${className} bg-black/30 rounded px-1`} {...props}>
+                            <code className={`${className} ${match ? 'bg-black/30' : ''} rounded px-1`} {...props}>
                               {children}
                             </code>
-                          )
+                          );
                         },
-                        pre({node, children, ...props}) {
+                        pre({children, ...props}) {
                           return (
-                            <pre className="bg-black/50 p-4 rounded-xl border border-white/5 overflow-x-auto" {...props}>
+                            <pre className="overflow-x-auto" {...props}>
                               {children}
                             </pre>
-                          )
+                          );
                         }
                       }}
                     >

@@ -1,5 +1,4 @@
-import type { Config } from 'tailwindcss'
-
+/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
@@ -10,12 +9,33 @@ export default {
       typography: {
         DEFAULT: {
           css: {
+            color: '#fff',
             maxWidth: 'none',
+            a: {
+              color: '#fff',
+              '&:hover': {
+                color: '#d1d5db',
+              },
+            },
+            h1: { color: '#fff' },
+            h2: { color: '#fff' },
+            h3: { color: '#fff' },
+            h4: { color: '#fff' },
+            strong: { color: '#fff' },
             code: {
+              color: '#fff',
               backgroundColor: 'rgb(0 0 0 / 0.3)',
               padding: '0.25rem',
               borderRadius: '0.25rem',
               fontWeight: '400',
+            },
+            pre: {
+              backgroundColor: 'rgb(0 0 0 / 0.5)',
+              color: '#fff',
+            },
+            blockquote: {
+              color: '#d1d5db',
+              borderLeftColor: '#374151',
             },
             'code::before': {
               content: '""'
@@ -48,5 +68,7 @@ export default {
       },
     },
   },
-  plugins: [],
-} satisfies Config
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
+}
