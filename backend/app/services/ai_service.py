@@ -5,7 +5,7 @@ class AIService:
     def __init__(self):
         self.model = None
         self.current_key_index = 0
-        self.api_keys = settings.GEMINI_API_KEYS
+        self.api_keys = settings.api_keys_list
         self.safety_settings = [
             {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
             {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
