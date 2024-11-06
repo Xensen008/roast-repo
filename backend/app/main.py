@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 from .config import settings
 from .services import github_service, ai_service
 
@@ -21,6 +22,7 @@ app.add_middleware(
 
 class RepoRequest(BaseModel):
     repo_url: str
+    project_description: Optional[str] = None
 
 @app.post("/analyze-repo")
 async def analyze_repo(repo_request: RepoRequest):
@@ -65,12 +67,21 @@ async def generate_readme(repo_request: RepoRequest):
         analysis = await github_service.analyze_repo_structure(owner, repo)
         if not analysis:
             raise HTTPException(status_code=404, detail="Repository not found")
+        
+        # Check if we need project description
+        if not analysis.get('readme_content') and not repo_request.project_description:
+            return {"needsDescription": True}
+            
+        # Add description to analysis if provided
+        if repo_request.project_description:
+            analysis['project_description'] = repo_request.project_description
             
         # Generate readme using AI
         readme = await ai_service.generate_readme(analysis)
         
         return {
-            "readme": readme
+            "readme": readme,
+            "needsDescription": False
         }
         
     except Exception as e:

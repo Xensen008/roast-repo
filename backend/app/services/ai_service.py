@@ -46,19 +46,24 @@ class AIService:
         return "All API keys have been exhausted. Please try again later."
     
     async def generate_readme(self, repo_analysis: dict) -> str:
-        prompt = self._create_readme_prompt(repo_analysis)
-        
-        response = await self.model.generate_content_async(
-            prompt,
-            safety_settings=self.safety_settings,
-            generation_config={
-                'temperature': 0.3,
-                'top_p': 0.9,
-                'top_k': 40,
-            }
-        )
-        
-        return response.text
+        try:
+            prompt = self._create_readme_prompt(repo_analysis)
+            response = await self.model.generate_content_async(
+                prompt,
+                safety_settings=self.safety_settings,
+                generation_config={
+                    'temperature': 0.2,  # Lower temperature for more accurate output
+                    'top_p': 0.8,
+                    'top_k': 40,
+                    'max_output_tokens': 2048  # Ensure enough length for detailed README
+                }
+            )
+            return response.text
+        except Exception as e:
+            if "429" in str(e) and self.current_key_index < len(self.api_keys) - 1:
+                self.rotate_api_key()
+                return await self.generate_readme(repo_analysis)
+            raise e
 
     def _create_roast_prompt(self, analysis: dict) -> str:
         readme_status = "no README"
@@ -97,52 +102,105 @@ class AIService:
         8. If they dare to have no README, unleash an extra wave of ridicule for their utter incompetence.
         """
 
-    def _detect_tech_stack(self, analysis: dict) -> dict:
+    def _analyze_project_structure(self, analysis: dict) -> dict:
+        """Deeply analyze project structure and tech stack"""
         files = analysis.get('file_structure', [])
-        package_info = analysis.get('package_info', '')
-        package_content = analysis.get('package_content', {})
-        
-        tech_stack = {
-            "dependencies": package_content.get('dependencies', {}),
-            "devDependencies": package_content.get('devDependencies', {}),
-            "scripts": package_content.get('scripts', {}),
-            "detected_files": {
-                "config": [f for f in files if f.endswith(('.config.js', '.config.ts', 'rc.js', '.json'))],
-                "typescript": any(f.endswith('.ts') or f.endswith('.tsx') for f in files),
-                "environment": [f for f in files if '.env' in f.lower()],
-                "docker": any(f.endswith('Dockerfile') or f == 'docker-compose.yml' for f in files),
-            }
+        package_json = analysis.get('package_content', {})
+        main_file = analysis.get('main_file_content', '')
+        existing_readme = analysis.get('readme_content', '')
+
+        # Framework Detection
+        framework = {
+            "name": None,
+            "type": None,
+            "version": None
         }
-        return tech_stack
+
+        if "next" in str(package_json):
+            framework = {"name": "Next.js", "type": "fullstack", "version": package_json.get('dependencies', {}).get('next')}
+        elif "react" in str(package_json):
+            framework = {"name": "React", "type": "frontend", "version": package_json.get('dependencies', {}).get('react')}
+        elif "vue" in str(package_json):
+            framework = {"name": "Vue", "type": "frontend", "version": package_json.get('dependencies', {}).get('vue')}
+        elif "express" in str(package_json):
+            framework = {"name": "Express", "type": "backend", "version": package_json.get('dependencies', {}).get('express')}
+
+        # Project Type Detection
+        project_type = None
+        if any(f.endswith(('.tsx', '.jsx', '.vue')) for f in files):
+            project_type = "frontend"
+        elif any(f.endswith(('.py', 'go', 'rs')) for f in files):
+            project_type = "backend"
+        elif framework["type"] == "fullstack":
+            project_type = "fullstack"
+
+        return {
+            "framework": framework,
+            "project_type": project_type,
+            "dependencies": package_json.get('dependencies', {}),
+            "dev_dependencies": package_json.get('devDependencies', {}),
+            "scripts": package_json.get('scripts', {}),
+            "has_typescript": any(f.endswith('.ts') or f.endswith('.tsx') for f in files),
+            "has_tests": any('test' in f.lower() or 'spec' in f.lower() for f in files),
+            "has_docker": any('dockerfile' in f.lower() or 'docker-compose' in f.lower() for f in files),
+            "has_ci": any('.github/workflows' in f for f in files),
+            "env_files": [f for f in files if '.env' in f.lower()],
+            "existing_readme": existing_readme
+        }
 
     def _create_readme_prompt(self, analysis: dict) -> str:
-        tech_stack = self._detect_tech_stack(analysis)
-        project_name = analysis.get('repo_name', '').replace('-', ' ').title()
+        project_info = self._analyze_project_structure(analysis)
         
-        return f"""Generate a professional README.md for this project based on the following analysis:
+        return f"""You are an expert technical writer. Generate a comprehensive README.md based on this project analysis:
 
-Project Details:
-- Name: {project_name}
-- Dependencies: {tech_stack['dependencies']}
-- Dev Dependencies: {tech_stack['devDependencies']}
-- Scripts: {tech_stack['scripts']}
-- Config Files: {tech_stack['detected_files']['config']}
-- Uses TypeScript: {tech_stack['detected_files']['typescript']}
-- Environment Files: {tech_stack['detected_files']['environment']}
-- Docker Setup: {tech_stack['detected_files']['docker']}
+Project Overview:
+- Framework: {project_info['framework']['name']} ({project_info['framework']['version']})
+- Type: {project_info['project_type']}
+- TypeScript: {'Yes' if project_info['has_typescript'] else 'No'}
+- Testing: {'Present' if project_info['has_tests'] else 'Not found'}
+- Docker: {'Configured' if project_info['has_docker'] else 'Not found'}
+- CI/CD: {'Setup' if project_info['has_ci'] else 'Not found'}
+- Environment Files: {project_info['env_files']}
 
-Guidelines:
-1. Create a concise but informative project description
-2. List ONLY the main features that are evident from the dependencies
+Dependencies: {project_info['dependencies']}
+Dev Dependencies: {project_info['dev_dependencies']}
+Scripts: {project_info['scripts']}
 
-Important:
-- NO assumptions about versions or undetected features
-- NO placeholder text or generic descriptions
-- Focus on accuracy over comprehensiveness
-- Include actual script commands from package.json
-- Only mention environment variables that are clearly required
+Existing README: {project_info['existing_readme'] if project_info['existing_readme'] else 'None'}
 
-Format everything in clean, professional markdown with proper code blocks and sections."""
+Instructions:
+1. If existing README exists:
+   - Keep useful information from existing README
+   - Update tech stack and setup instructions
+   - Modernize formatting and structure
+   - Add missing critical sections
+
+2. If no README exists:
+   - Create clear project description based on codebase analysis
+   - Document actual features visible in the code
+   - Include accurate setup instructions for detected framework
+   - List all available scripts with explanations
+   - Add environment variable documentation if env files exist
+
+3. Required Sections:
+   - Project Title and Description
+   - Features (based on actual code)
+   - Prerequisites (based on dependencies)
+   - Installation & Setup (framework-specific)
+   - Available Scripts (from package.json)
+   - Environment Variables (if env files exist)
+   - Development Guide
+   - Deployment Instructions (if Docker/CI present)
+
+4. Important Rules:
+   - Use modern markdown formatting with code blocks
+   - Include relevant badges for detected tech
+   - Be specific about versions and requirements
+   - Focus on accuracy over comprehensiveness
+   - No placeholder text or assumptions
+   - Include actual commands from scripts
+
+Remember: This is a professional README that developers will use to understand and set up the project. Be clear, accurate, and practical."""
 
 # Create and export an instance
 ai_service = AIService()

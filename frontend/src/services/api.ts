@@ -11,6 +11,7 @@ interface RepoAnalysisResponse {
 }
 
 interface ReadmeResponse {
+  descriptionNeeded: any;
   readme: string;
 }
 
@@ -29,17 +30,20 @@ export const analyzeRepository = async (repoUrl: string): Promise<RepoAnalysisRe
   return await response.json()
 }
 
-export const generateReadme = async (repoUrl: string): Promise<ReadmeResponse> => {
+export const generateReadme = async (repoUrl: string, description?: string): Promise<ReadmeResponse> => {
   const response = await fetch(`${API_URL}/generate-readme`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ repo_url: repoUrl })
-  })
+    body: JSON.stringify({ 
+      repo_url: repoUrl,
+      project_description: description 
+    })
+  });
 
   if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.detail || 'Failed to generate README')
+    const error = await response.json();
+    throw new Error(error.detail || 'Failed to generate README');
   }
 
-  return await response.json()
-}
+  return await response.json();
+};
