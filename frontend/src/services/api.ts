@@ -1,3 +1,5 @@
+import { API_URL } from '../config';
+
 interface RepoAnalysisResponse {
   roast: string;
   analysis: {
@@ -13,7 +15,7 @@ interface ReadmeResponse {
 }
 
 export const analyzeRepository = async (repoUrl: string): Promise<RepoAnalysisResponse> => {
-  const response = await fetch('/api/analyze-repo', {
+  const response = await fetch(`${API_URL}/analyze-repo`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repo_url: repoUrl })
@@ -28,7 +30,7 @@ export const analyzeRepository = async (repoUrl: string): Promise<RepoAnalysisRe
 }
 
 export const generateReadme = async (repoUrl: string): Promise<ReadmeResponse> => {
-  const response = await fetch('/api/generate-readme', {
+  const response = await fetch(`${API_URL}/generate-readme`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repo_url: repoUrl })
