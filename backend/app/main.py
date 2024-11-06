@@ -6,6 +6,11 @@ from .services import github_service, ai_service
 
 app = FastAPI()
 
+# Add root endpoint for health check
+@app.get("/")
+async def root():
+    return {"status": "ok", "message": "Code Critic API is running"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://codecritic.vercel.app"],
