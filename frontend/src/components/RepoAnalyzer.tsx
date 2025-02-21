@@ -16,6 +16,9 @@ const RepoAnalyzer: React.FC = () => {
   const [_analysisData, setAnalysisData] = useState<any>(null)
   const [needsDescription, setNeedsDescription] = useState(false);
   const [projectDescription, setProjectDescription] = useState('');
+  const [projectFeatures, setProjectFeatures] = useState('');
+  const [setupSteps, setSetupSteps] = useState('');
+  const [envVariables, setEnvVariables] = useState('');
 
   const handleAnalyze = async (e: FormEvent) => {
     e.preventDefault()
@@ -57,16 +60,21 @@ const RepoAnalyzer: React.FC = () => {
     try {
       const data = await generateReadme(repoUrl);
       
-      if (data.descriptionNeeded) {
+      if (data.needsDescription || data.analysis?.readme_needs_update) {
         setNeedsDescription(true);
-        toast.error("Your project is as mysterious as your coding skills. Care to explain what it does?", {
-          duration: 5000,
-          style: {
-            background: '#000',
-            color: '#fff',
-            border: '1px solid rgba(255,255,255,0.1)'
+        toast.error(
+          data.needsDescription 
+            ? "Your project is as mysterious as your coding skills. Care to explain what it does?"
+            : "Your README is as useful as a chocolate teapot. Let's make it better!",
+          {
+            duration: 5000,
+            style: {
+              background: '#000',
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.1)'
+            }
           }
-        });
+        );
         return;
       }
       
@@ -79,9 +87,19 @@ const RepoAnalyzer: React.FC = () => {
   };
 
   const handleDescriptionSubmit = async () => {
+    if (!projectDescription.trim()) {
+      toast.error("At least tell me what this project does!");
+      return;
+    }
+    
     setReadmeLoading(true);
     try {
-      const data = await generateReadme(repoUrl, projectDescription);
+      const data = await generateReadme(repoUrl, {
+        description: projectDescription,
+        features: projectFeatures,
+        setup: setupSteps,
+        environment: envVariables
+      });
       setGeneratedReadme(data.readme);
       setNeedsDescription(false);
     } catch (error) {
@@ -150,13 +168,29 @@ const RepoAnalyzer: React.FC = () => {
               <p className="text-xl text-gray-300 leading-relaxed mt-6 whitespace-pre-line">{roast}</p>
               
               <div className="mt-8 pt-8 border-t border-white/10">
-                <button
-                  onClick={handleGenerateReadme}
-                  disabled={readmeLoading || loading}
-                  className="w-full p-4 rounded-xl bg-white/5 text-white border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:bg-white/10 hover:border-white/30"
-                >
-                  {readmeLoading ? 'GENERATING README...' : 'GENERATE PROPER README'}
-                </button>
+                {_analysisData?.readme_status?.has_readme && (
+                  <div className="text-yellow-400 p-4 rounded-xl bg-yellow-400/10 border border-yellow-400/20">
+                    <div className="flex items-start">
+                      <svg className="w-6 h-6 mr-3 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div>
+                        <h3 className="font-semibold mb-2">README Already Exists</h3>
+                        <p className="text-sm opacity-90">{_analysisData.readme_status.message}</p>
+                        <p className="text-sm mt-2 opacity-75">Delete the existing README.md from your repository first if you want to generate a new one.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {!_analysisData?.readme_status?.has_readme && (
+                  <button
+                    onClick={handleGenerateReadme}
+                    disabled={readmeLoading || loading}
+                    className="w-full p-4 rounded-xl bg-white/5 text-white border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:bg-white/10 hover:border-white/30"
+                  >
+                    {readmeLoading ? 'GENERATING README...' : 'GENERATE README'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -219,20 +253,56 @@ const RepoAnalyzer: React.FC = () => {
         {needsDescription && (
           <div className="glass border border-white/10 p-4 md:p-8 rounded-2xl backdrop-blur-lg shadow-2xl animate-fade-in mx-4">
             <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-4">
-              Your Project Looks Empty AF! 🤦‍♂️
+              Your Project Needs Better Documentation! 🤦‍♂️
             </h2>
-            <textarea
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
-              placeholder="Tell me what this mess of code actually does... (if anything)"
-              className="w-full p-3 md:p-4 rounded-xl bg-black/40 border border-white/20 focus:border-white/40 outline-none text-base md:text-lg transition-all duration-300 hover:border-white/30 min-h-[100px]"
-            />
-            <button
-              onClick={handleDescriptionSubmit}
-              className="mt-4 w-full p-3 md:p-4 rounded-xl bg-white/5 text-white border border-white/20 transition-all duration-300 hover:bg-white/10"
-            >
-              GENERATE README WITH DESCRIPTION
-            </button>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-white mb-2">Project Description (Required)</label>
+                <textarea
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
+                  placeholder="What does this project do? What problem does it solve?"
+                  className="w-full p-3 md:p-4 rounded-xl bg-black/40 border border-white/20 focus:border-white/40 outline-none text-base md:text-lg transition-all duration-300 hover:border-white/30 min-h-[100px]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-white mb-2">Key Features</label>
+                <textarea
+                  value={projectFeatures}
+                  onChange={(e) => setProjectFeatures(e.target.value)}
+                  placeholder="List the main features and functionalities"
+                  className="w-full p-3 md:p-4 rounded-xl bg-black/40 border border-white/20 focus:border-white/40 outline-none text-base md:text-lg transition-all duration-300 hover:border-white/30 min-h-[80px]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-white mb-2">Setup Instructions</label>
+                <textarea
+                  value={setupSteps}
+                  onChange={(e) => setSetupSteps(e.target.value)}
+                  placeholder="How to install and run the project?"
+                  className="w-full p-3 md:p-4 rounded-xl bg-black/40 border border-white/20 focus:border-white/40 outline-none text-base md:text-lg transition-all duration-300 hover:border-white/30 min-h-[80px]"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-white mb-2">Environment Variables</label>
+                <textarea
+                  value={envVariables}
+                  onChange={(e) => setEnvVariables(e.target.value)}
+                  placeholder="List required environment variables and their descriptions"
+                  className="w-full p-3 md:p-4 rounded-xl bg-black/40 border border-white/20 focus:border-white/40 outline-none text-base md:text-lg transition-all duration-300 hover:border-white/30 min-h-[80px]"
+                />
+              </div>
+              
+              <button
+                onClick={handleDescriptionSubmit}
+                className="mt-4 w-full p-3 md:p-4 rounded-xl bg-white/5 text-white border border-white/20 transition-all duration-300 hover:bg-white/10"
+              >
+                GENERATE README WITH DETAILS
+              </button>
+            </div>
           </div>
         )}
 

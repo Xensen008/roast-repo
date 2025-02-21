@@ -27,6 +27,7 @@ class GitHubService:
             
         analysis = {
             "has_readme": False,
+            "readme_needs_update": False,
             "has_env": False,
             "exposed_secrets": [],
             "package_info": None,
@@ -39,7 +40,9 @@ class GitHubService:
             name = item["name"].lower()
             if name == "readme.md":
                 analysis["has_readme"] = True
-                analysis["readme_content"] = await self._get_file_content(item["download_url"])
+                readme_content = await self._get_file_content(item["download_url"])
+                analysis["readme_content"] = readme_content
+                analysis["readme_needs_update"] = self._is_readme_incomplete(readme_content)
             elif ".env" in name:
                 analysis["has_env"] = True
                 content = await self._get_file_content(item["download_url"])
@@ -73,6 +76,39 @@ class GitHubService:
             matches = re.finditer(pattern, content)
             found_secrets.extend(m.group(0) for m in matches)
         return found_secrets
+    
+    def _is_readme_incomplete(self, content: str) -> bool:
+        if not content or len(content.strip()) < 50:
+            return True
+            
+        # Check for default/template READMEs
+        default_patterns = [
+            r"# Getting Started with Create React App",
+            r"This is a \[Next\.js\] project bootstrapped",
+            r"This README would normally document whatever steps",
+            r"<\?php\s+namespace\s+",
+            r"# Getting Started with \[.*\]",
+            r"# Default README"
+        ]
+        
+        for pattern in default_patterns:
+            if re.search(pattern, content):
+                return True
+                
+        # Check for minimal content
+        required_sections = [
+            r"#.*installation|setup|getting started",
+            r"#.*usage|features|functionality",
+            r"#.*configuration|env|environment",
+            r"#.*prerequisites|requirements",
+        ]
+        
+        found_sections = 0
+        for pattern in required_sections:
+            if re.search(pattern, content, re.I):
+                found_sections += 1
+                
+        return found_sections < 2  # README needs update if less than 2 key sections found
     
     async def get_recent_commits(self, owner: str, repo: str, limit: int = 5) -> list:
         async with ClientSession() as session:

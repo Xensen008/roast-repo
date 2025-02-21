@@ -151,9 +151,21 @@ class AIService:
     def _create_readme_prompt(self, analysis: dict) -> str:
         project_info = self._analyze_project_structure(analysis)
         
-        return f"""You are an expert technical writer. Generate a comprehensive README.md based on this project analysis:
+        # Get user-provided details
+        project_description = analysis.get('project_description', '')
+        project_features = analysis.get('project_features', '')
+        setup_instructions = analysis.get('setup_instructions', '')
+        env_variables = analysis.get('environment_variables', '')
+        
+        # Create a detailed project overview using user input
+        detailed_overview = f"""
+User-Provided Project Details:
+- Description: {project_description}
+- Features: {project_features}
+- Setup Steps: {setup_instructions}
+- Environment Variables: {env_variables}
 
-Project Overview:
+Technical Analysis:
 - Framework: {project_info['framework']['name']} ({project_info['framework']['version']})
 - Type: {project_info['project_type']}
 - TypeScript: {'Yes' if project_info['has_typescript'] else 'No'}
@@ -165,42 +177,56 @@ Project Overview:
 Dependencies: {project_info['dependencies']}
 Dev Dependencies: {project_info['dev_dependencies']}
 Scripts: {project_info['scripts']}
+"""
+        
+        return f"""You are an expert technical writer. Generate a comprehensive README.md based on this project analysis.
+Use the user-provided details as the primary source of information, and complement it with the technical analysis.
 
-Existing README: {project_info['existing_readme'] if project_info['existing_readme'] else 'None'}
+{detailed_overview}
 
-Instructions:
-1. If existing README exists:
-   - Keep useful information from existing README
-   - Update tech stack and setup instructions
-   - Modernize formatting and structure
-   - Add missing critical sections
+Instructions for README Generation:
+1. Start with a Clear Title and Description:
+   - Use the project description provided by the user
+   - Add badges for the detected technologies
+   - Keep the tone professional and informative
 
-2. If no README exists:
-   - Create clear project description based on codebase analysis
-   - Document actual features visible in the code
-   - Include accurate setup instructions for detected framework
-   - List all available scripts with explanations
-   - Add environment variable documentation if env files exist
+2. Features Section:
+   - Start with the user-provided features
+   - Complement with any additional features detected in the codebase
+   - Format as a clear, bulleted list
 
-3. Required Sections:
-   - Project Title and Description
-   - Features (based on actual code)
-   - Prerequisites (based on dependencies)
-   - Installation & Setup (framework-specific)
-   - Available Scripts (from package.json)
-   - Environment Variables (if env files exist)
-   - Development Guide
-   - Deployment Instructions (if Docker/CI present)
+3. Installation & Setup:
+   - Use the user-provided setup instructions as the primary guide
+   - Add any missing technical steps based on the detected framework
+   - Include all necessary commands from package.json scripts
+   - Make the steps clear and sequential
 
-4. Important Rules:
-   - Use modern markdown formatting with code blocks
-   - Include relevant badges for detected tech
-   - Be specific about versions and requirements
-   - Focus on accuracy over comprehensiveness
-   - No placeholder text or assumptions
-   - Include actual commands from scripts
+4. Environment Variables:
+   - Document all variables mentioned in the user input
+   - Add any additional variables found in .env files
+   - Explain the purpose of each variable
+   - Include proper formatting for environment setup
 
-Remember: This is a professional README that developers will use to understand and set up the project. Be clear, accurate, and practical."""
+5. Development Guide:
+   - Include all available scripts with explanations
+   - Add framework-specific development instructions
+   - Include testing information if tests are present
+   - Add Docker instructions if applicable
+
+6. Additional Sections Based on Tech Stack:
+   - Add CI/CD information if present
+   - Include deployment instructions
+   - Add troubleshooting guides if common issues are known
+   - Include contribution guidelines
+
+Formatting Rules:
+- Use clear hierarchical structure with proper heading levels
+- Include code blocks with proper language tags
+- Add tables where appropriate (e.g., for environment variables)
+- Use badges for technologies and build status
+- Include links to important resources
+
+Remember: Create a professional, comprehensive README that combines user-provided information with technical analysis. Make it both informative and easy to follow."""
 
 # Create and export an instance
 ai_service = AIService()
