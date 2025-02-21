@@ -113,7 +113,7 @@ const RepoAnalyzer: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white p-4">
       <div className="max-w-4xl mx-auto pt-16 space-y-12">
         {/* GitHub Corner */}
-        <a href="https://github.com/xensen008/repo-roaster" 
+        <a href="https://github.com/Xensen008/roast-repo" 
            className="github-corner absolute top-0 right-0" 
            aria-label="View source on GitHub">
           <svg width="80" height="80" viewBox="0 0 250 250" className="fill-white text-black" aria-hidden="true">
